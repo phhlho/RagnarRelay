@@ -1,0 +1,7 @@
+extends layout
+
+block content
+    h1= title
+    form#formAddTeam(name="addTeam",method="post",action="/addteam")
+        input#inputTeamName(type="text", placeholder="teamname", name="teamname")
+        button#btnSubmit(type="submit") submit

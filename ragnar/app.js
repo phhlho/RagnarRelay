@@ -2,12 +2,17 @@
 /**
  * Module dependencies.
  */
-
+// Default
 var express = require('express');
 var routes = require('./routes');
 var user = require('./routes/user');
 var http = require('http');
 var path = require('path');
+//Mine
+var secrets = require('./config/secrets');
+var mongo = require('mongodb');
+var monk = require('monk');
+var db = monk(secrets.db);
 
 var app = express();
 
@@ -30,9 +35,15 @@ if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
+// GETs
 app.get('/', routes.index);
 app.get('/users', user.list);
+app.get('/teams', routes.teamlist(db));
+app.get('/newteam', routes.newteam);
+// POSTs
+app.post('/addteam', routes.addteam(db));
 
+// Kick it up!
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
 });
