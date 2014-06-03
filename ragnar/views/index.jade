@@ -1,8 +1,55 @@
 extends layout
 
 block content
-  .jumbotron
-    h1 Navbar example
-    p This is a startup example, implemented with a fixed navbar
-    a(href='teams') View Teams
-    button.btn.btn-ttc My Button
+  .container
+    .jumbotron.header
+    
+  // Timer
+  .container.timer-container.timer    
+      p#bigmessage
+      p#bigmessage2
+      p#bigtime     
+  
+  .container
+    .col-md-5
+    .col-md-1
+      .button#btnStart.btn.btn-default.btn-lg.action-button
+        span.glyphicon.glyphicon-off    
+    .col-md-1      
+      .button#btnReset.btn.btn-default.btn-lg.action-button
+        span.glyphicon.glyphicon-fast-backward        
+    .col-md-1      
+      .button#btnNext.btn.btn-default.btn-lg.action-button
+        span.glyphicon.glyphicon-share                
+    .col-md-5
+  
+  .container
+    // Wrapper
+    #wrapper
+      // TEAM INFO
+      #teamInfo
+        h2 Team Info
+        p
+          strong Name:
+          |  <span id='teamInfoName'></span>
+      // /TEAM INFO    
+      // TEAM LIST
+      h2 Team List
+      #teamList
+        .table-responsive
+          table.table.table-striped.table-condensed
+            thead
+              th Name
+              th 
+            tbody
+      // /TEAM LIST
+      // ADD TEAM
+      h2 Add Team
+      #addTeam
+        fieldset
+          input#inputTeamName(type='text', placeholder='Name')
+          br
+          button#btnAddTeam.btn.btn-success Add Team
+    // /ADD USER      
+    // /WRAPPER
+  // /container

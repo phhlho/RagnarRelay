@@ -1,9 +1,57 @@
 body {
-  padding: 50px;
+  padding: 0px;
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
-  padding-top: 70px;
+  padding-top: 10px;
   min-height: 2000px;
 }
 a {
   color: #00b7ff;
+}
+td.text-cell {
+  vertical-align: middle !important;
+}
+.header {
+  opacity: 0.1;
+  background-image: url("../images/zombies.png");
+  background-size: 100% 100%;
+  vertical-align: middle;
+  text-align: center;
+  font-size: 30pt;
+  height: 100px;
+}
+.timer-container {
+  font-family: 'Revalia', cursive;
+  color: #c12e2a;
+  text-align: center;
+/*border 1px solid
+  border-radius 6px*/
+}
+.action-button {
+  position: relative;
+  top: 50%;
+  left: 50%;
+}
+/* Large desktop */
+@media (min-width: 979px) {
+  .timer {
+    font-size: 45pt;
+  }
+}
+/* Portrait tablet to landscape and desktop */
+@media (min-width: 768px) and (max-width: 979px) {
+  .timer {
+    font-size: 35pt;
+  }
+}
+/* Landscape phone to portrait tablet */
+@media (max-width: 767px) {
+  .timer {
+    font-size: 25pt;
+  }
+}
+/* Landscape phones and down */
+@media (max-width: 480px) {
+  .timer {
+    font-size: 15pt;
+  }
 }
