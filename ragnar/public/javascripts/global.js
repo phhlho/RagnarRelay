@@ -1,9 +1,11 @@
 var liveInfoDefault = {
-  actualStart : null,
+  raceStart : null,
   currentLegStartTime : null,
-  currentTotalTime : 0,
+  // BEGIN kill these
   currentLegIndex : 0,
   currentRotationIndex : 0,
+  currentTotalTime : 0,
+  // END kill these
   legCompletionTime : [
     [-1,-1,-1],
     [-1,-1,-1],
@@ -94,48 +96,40 @@ var teamInfo = {
 }
 
 // DOM Ready =============================================================
-$(document).ready(function() {
-  /* TODO: KILL ALL THIS */  
-  // Populate the team table on initial page load
-  populateTable();
-  // Teamname link click
-  $('#teamList table tbody').on('click', 'td a.linkshowteam', showTeamInfo);    
-  // Add Team button click
-  $('#btnAddTeam').on('click', addTeam);  
-  // Delete Team link click
-  $('#teamList table tbody').on('click', 'td a.linkdeleteteam', deleteTeam);
-  resetApp();
-  /* TODO: END KILL ALL THIS */
-  
+$(document).ready(function() {  
+  getInfo();  
   // Start race button click
   $('#btnStart').on('click', startRace);     
   $('#btnReset').on('click', resetApp);     
   $('#btnNext').on('click', nextRunner);
-  updateClock();
   window.setInterval(updateClock, 1000);
 });
 
 
 // Actions ===============================================================
-function startRace() {
-  // TODO: This should save information back to database
-  liveInfo.actualStart = new Date();  
-  liveInfo.currentLegStartTime = liveInfo.actualStart;
+function woah() {
+  alert('woah');
+}
+function startRace() {  
+  liveInfo.raceStart = new Date();  
+  liveInfo.currentLegStartTime = liveInfo.raceStart;
+  
+  saveInfo(liveInfo);
 }
 
 function resetApp() {
-  // TODO: This should save the default state back to the database;
   liveInfo = {};
-  $.extend(liveInfo,liveInfoDefault);
+  $.extend(liveInfo,liveInfoDefault);  
+  saveInfo(liveInfoDefault);
 }
 
 function nextRunner() {  
   // Set completion time
   var currentTime = new Date();  
-  var legCompletionTime = Math.abs((currentTime.getTime() - liveInfo.currentLegStartTime.getTime()))/1000;
+  var legCompletionTime = Math.abs((currentTime.getTime() - liveInfo.currentLegStartTime.getTime()));
    
   // Update Info    
-  liveInfo.legCompletionTime[liveInfo.currentLegIndex, liveInfo.currentRotationIndex] = legCompletionTime;
+  liveInfo.legCompletionTime[liveInfo.currentLegIndex][liveInfo.currentRotationIndex] = legCompletionTime;
   liveInfo.currentTotalTime += legCompletionTime;
   liveInfo.currentLegStartTime = currentTime;      
   liveInfo.currentLegIndex++;
@@ -145,10 +139,36 @@ function nextRunner() {
   }  
   
   updateClock();
-  // TODO: This should save information back to database  
+  saveInfo(liveInfo);
 }
 
-// Functions =============================================================
+// Commands =============================================================
+function getInfo() {
+  $.getJSON( '/getInfo', function( data ) {
+    liveInfo = data[0];
+    liveInfo.raceStart = liveInfo.raceStart ? new Date(liveInfo.raceStart) : null;
+    liveInfo.currentLegStartTime = liveInfo.currentLegStartTime ? new Date(liveInfo.currentLegStartTime) : null;
+  });
+}
+
+function saveInfo(info) {
+  $.ajax({
+    type: 'POST',
+    data: info,
+    url: '/saveInfo',
+    dataType: 'JSON'
+  }).done(function( response ) {
+    // Check for successful (blank) response
+    if (response.msg === '') {      
+    }
+    else {
+      // If something goes wrong, alert the error message that our service returned
+      alert('Error: ' + response.msg);
+    }
+  });  
+}
+
+// Functions
 function getCurrentVan() {
   if (liveInfo.currentLegIndex <= 5) return 1;
   return 2;
@@ -159,22 +179,11 @@ function getCurrentRunner() {
 }
 
 function updateClock() {
-  var timeString = '';
-  var messageString = '';  
-  var messageString2 = '';  
-  if (liveInfo.actualStart == null) {
-    messageString = 'Time to Apocalypse'
-    timeString = getTimeString(teamInfo.raceStart, new Date())
-  }
-  else {        
-    messageString = getCurrentRunner().name + ' Runs';
-    messageString2 = 'Van: ' + getCurrentVan() + ' Leg: ' + ((liveInfo.currentLegIndex + 1) + 12 * liveInfo.currentRotationIndex);
-    timeString = getTimeString(new Date(), liveInfo.currentLegStartTime)
-  }
-  
-  $('#bigmessage').html(messageString);
-  $('#bigmessage2').html(messageString2);
-  $('#bigtime').html(timeString);
+  populateList();
+  if (liveInfo.raceStart == null) {
+    $('#bigmessage').html('Time to Apocalypse');
+    $('#bigtime').html(getTimeDifferenceString(teamInfo.raceStart, new Date()));
+  }  
 }
 
 function padTimeNumber(num) {
@@ -182,8 +191,13 @@ function padTimeNumber(num) {
     return s.substr(s.length-2);
 }
 
-function getTimeString(highTime, lowTime) {
+function getTimeDifferenceString(highTime, lowTime) {
   var difference = highTime - lowTime;
+  return getTimeString(difference);
+}
+
+function getTimeString(totalMilliseconds) {
+  var difference = totalMilliseconds;
   var hourMultiple = 1000 * 60 * 60
   var hours = Math.floor(difference / hourMultiple);
   difference -= (hours * hourMultiple);
@@ -197,107 +211,65 @@ function getTimeString(highTime, lowTime) {
   return result;
 }
 
-// Fill table with data
-function populateTable() {
-  // Empty content string
-  var tableContent = '';
-  // jQuery AJAX call for JSON
-  $.getJSON( '/teams', function( data ) {
-    // Stick our team data array into a teamlist variable in the global object
-    teamListData = data;
-    // For each item in our JSON, add a table row and cells to the content string
-    $.each(data, function(){
-      tableContent += '<tr>';
-      tableContent += '<td class="text-cell"><a href="#" class="linkshowteam" rel="' + this.name + '" title="Show Details">' + this.name + '</td>';
-      tableContent += '<td><a href="#" class="linkdeleteteam btn btn-danger" rel="' + this._id + '">delete</a></td>';
-      tableContent += '</tr>';
-    });
-
-    // Inject the whole content string into our existing HTML table
-    $('#teamList table tbody').html(tableContent);
-  });
-};
-
-// Show Team Info
-function showTeamInfo(event) {
-  // Prevent Link from Firing
-  event.preventDefault();
-  // Retrieve teamname from link rel attribute
-  var thisTeamName = $(this).attr('rel');
-  // Get index of object based on id value
-  var arrayPosition = teamListData.map(function(arrayItem) { return arrayItem.name; }).indexOf(thisTeamName);
-  // Get our Team Object
-  var thisTeamObject = teamListData[arrayPosition];
-  //Populate Info Box
-  $('#teamInfoName').text(thisTeamObject.name);
-}
-
-// Add Team
-function addTeam(event) {
-  event.preventDefault();  
-  // Super basic validation - increase errorCount variable if any fields are blank
-  var errorCount = 0;
-  $('#addTeam input').each(function(index, val) {
-    if($(this).val() === '') { errorCount++; }
-  });
-  // Check and make sure errorCount's still at zero
-  if(errorCount === 0) {
-    // If it is, compile all user info into one object
-    var newTeam = {
-      'name': $('#addTeam fieldset input#inputTeamName').val()
+// Fill list with data
+function populateList() {
+  if (liveInfo === null) return;
+  var html = "";  
+  var lastWasCompleted = false;
+  
+  for (var legIndex = 0; legIndex < 3; legIndex++) {
+    for (var runnerIndex = 0; runnerIndex < 12; runnerIndex++)  {
+      var legHtml = '';
+      
+      var completionTime = liveInfo.legCompletionTime[runnerIndex][legIndex];
+      var completedRunner = (completionTime >= 0);
+      var currentRunner = (liveInfo.raceStart !== null && completionTime === -1 && (lastWasCompleted || legIndex === 0 && (runnerIndex == 0)));
+      
+      // Runner details            '
+      legHtml += '<h3 class="list-group-item-heading" style="float:left">' + teamInfo.runner[runnerIndex].name + '</h3>';
+      legHtml += '<h3 class="list-group-item-heading" style="float:right">'
+      if (completedRunner) {
+        legHtml += getTimeString(completionTime);
+      }
+      else if (currentRunner) {
+        legHtml += getTimeDifferenceString(new Date(), liveInfo.currentLegStartTime); 
+      }
+      else {
+        legHtml += 'ETA';
+      }
+      legHtml += '</h3>';
+           
+      var vanNumber = runnerIndex > 5 ? 2 : 1;
+      var runnerNumber = vanNumber === 2 ? runnerIndex - 5 : runnerIndex + 1;      
+      var legNumber = legIndex + 1;
+      legHtml += '<div style="clear:both;"></div>'
+      
+      legHtml += '<span class="label label-primary label-margin" style="float:left">Van ' + vanNumber + '</span>';
+      legHtml += '<span class="label label-primary label-margin" style="float:left">Runner ' + runnerNumber + '</span>';
+      legHtml += '<span class="label label-primary label-margin" style="float:left">Leg ' + legNumber + '</span>';
+      if (completedRunner) legHtml += '<h3 class="list-group-item-heading" style="float:right">PACE</h3>'
+      legHtml += '<div style="clear:both;"></div>'
+      
+      // Set class item
+      var listGroupItemClass = 'list-group-item';     
+      // Set class item to green       
+      // Set current runner class to yellow
+      if (currentRunner) {        
+        listGroupItemClass += ' list-group-item-warning';
+      }
+      if (completedRunner) {
+        listGroupItemClass += ' list-group-item-success';
+        lastWasCompleted = true;
+      }
+      else {lastWasCompleted = false;}
+      
+      // add list group wrapper
+      legHtml = '<div onclick="woah()" class="' + listGroupItemClass + '">' + legHtml + '</div>';
+      
+      /*<h4 class="list-group-item-heading">My heading 1</h4><p class="list-group-item-text">My text 1</p><table class="table"><tbody><tr><td>A</td><td>B</td><td>C</td></tr><tr><td>D</td><td>E</td><td>F</td></tr><tr><td>G</td><td>H</td><td>I</td></tr></tbody></table><p></p>
+      */
+      html += legHtml;      
     }
-    // Use AJAX to post the object to our adduser service
-    $.ajax({
-      type: 'POST',
-      data: newTeam,
-      url: '/addteam',
-      dataType: 'JSON'
-    }).done(function( response ) {
-      // Check for successful (blank) response
-      if (response.msg === '') {
-        // Clear the form inputs
-        $('#addTeam fieldset input').val('');
-        // Update the table
-        populateTable();
-      }
-      else {
-        // If something goes wrong, alert the error message that our service returned
-        alert('Error: ' + response.msg);
-      }
-    });
   }
-  else {
-    // If errorCount is more than 0, error out
-    alert('Please fill in all fields');
-    return false;
-  }
-};
-
-// Delete Team
-function deleteTeam(event) {
-  event.preventDefault();
-  // Pop up a confirmation dialog
-  var confirmation = confirm('Are you sure you want to delete this team?');
-  // Check and make sure the user confirmed
-  if (confirmation === true) {
-    // If they did, do our delete
-    $.ajax({
-      type: 'DELETE',
-      url: '/deleteteam/' + $(this).attr('rel')
-    }).done(function( response ) {
-      // Check for a successful (blank) response
-      if (response.msg === '') {
-      }
-      else {
-        alert('Error: ' + response.msg);
-      }
-      // Update the table
-      populateTable();
-    });
-
-  }
-  else {
-    // If they said no to the confirm, do nothing
-    return false;
-  }
-};
+  $('#infoList').html(html);
+}

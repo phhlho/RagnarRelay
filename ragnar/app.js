@@ -8,11 +8,12 @@ var routes = require('./routes');
 var team = require('./routes/team');
 var http = require('http');
 var path = require('path');
+
 //Mine
+var info = require('./routes/info');
 var secrets = require('./config/secrets');
 var mongo = require('mongoskin');
 var db = mongo.db(secrets.db, {native_parser:true});
-
 var app = express();
 
 // all environments
@@ -34,11 +35,15 @@ if ('development' == app.get('env')) {
   app.use(express.errorHandler());
 }
 
-// GETs
+// Handles
 app.get('/', routes.index);
 app.get('/teams', team.teamlist(db));
 app.post('/addteam', team.addteam(db));
 app.delete('/deleteteam/:id', team.deleteteam(db));
+
+app.get('/getInfo', info.getInfo(db));
+app.post('/saveInfo', info.saveInfo(db));
+
 // Kick it up!
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));
