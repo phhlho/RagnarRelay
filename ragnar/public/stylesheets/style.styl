@@ -3,49 +3,59 @@ body
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif
   padding-top: 10px;
   min-height: 2000px;
+  background-color #f7f7f7
+  
+#bigtime
+  position relative
+  top -10px
 a
   color: #00B7FF
 td.text-cell
   vertical-align: middle !important;
 .header
-  opacity .1
-  background-image: url(../images/zombies.png)
+  background-image: url(../images/zombie-title-new.png)
   background-size: 100% 100%
   vertical-align: middle
   text-align: center
-  font-size: 30pt
-  height: 100px
+  background-color : white
+  font-size: 30pt  
 .timer-container  
   font-family 'Revalia', cursive
-  color #c12e2a
+  color #9B212A
   text-align center
-  /*border 1px solid
-  border-radius 6px*/
 
 .action-button
-  position: relative;
-  top: 50%;
-  left: 50%;
+  position: relative
+  top: 50%
+  left: 50%
 
 .label-margin
-  margin: .0em .2em;
+  margin: .0em .2em
+
+#btnNextRunner
+  float: left
 
 /* Large desktop */
 @media (min-width: 979px)
   .timer
-    font-size 45pt
-
+    font-size 55pt
+  .header
+    height 400px
 /* Portrait tablet to landscape and desktop */
 @media (min-width: 768px) and (max-width: 979px)
   .timer
-    font-size 35pt
-
+    font-size 45pt
+  .header
+    height 300px
 /* Landscape phone to portrait tablet */
 @media (max-width: 767px)
   .timer
-    font-size 25pt
-
+    font-size 30pt
+  .header
+    height 250px
 /* Landscape phones and down */
 @media (max-width: 480px)
   .timer
-    font-size 15pt
+    font-size 25pt
+  .header
+    height 200px

@@ -26,7 +26,7 @@ var liveInfo = {};
 
 var raceInfo = {
   legDistance : [
-    [5.9,4.2,4.6],
+    [5.8,4.2,4.6],
     [4.5,4.5,6.2],
     [2.7,5.4,5.6],
     [7.6,4.8,7.7],
@@ -38,59 +38,85 @@ var raceInfo = {
     [5.6,4,3.7],
     [5.8,7.3,5],
     [6.8,4.5,9.4]
-  ]
+  ],
+  legElevation : [
+      [5.8,4.2,4.6],
+      [4.5,4.5,6.2],
+      [2.7,5.4,5.6],
+      [7.6,4.8,7.7],
+      [6.3,3.8,5.5],
+      [9.6,3.1,5.3],
+      [7.3,5.4,6],
+      [2.9,5.1,5.2],
+      [6.9,5.3,4.2],
+      [5.6,4,3.7],
+      [5.8,7.3,5],
+      [6.8,4.5,9.4]
+    ]  
 };
     
 var teamInfo = {
   raceStart : new Date(2014, 5, 6, 9, 30, 0, 0),  
   runner : [
     {
-      name : 'T. Madland',
-      pace : '9:30'
+      name : 'Tina',
+      pace : '9:30',
+      paceMilliseconds : 570000
     },
     {
-      name : 'B. Walter',
-      pace : '8:00'
+      name : 'Brock',
+      pace : '8:00',
+      paceMilliseconds : 510000
     },
     {
-      name : 'C. Schultheis',
-      pace : '10:00'
+      name : 'Christine',
+      pace : '10:00',
+      paceMilliseconds : 600000
     },
     {
-      name : 'P. Heyrman',
-      pace : '7:50'
+      name : 'Phil',
+      pace : '7:30',
+      paceMilliseconds : 450000
     },
     {
-      name : 'B. Belloli',
-      pace : '9:00'
+      name : 'Brian',
+      pace : '9:00',
+      paceMilliseconds : 510000
     },
     {
-      name : 'D. Bordeman',
-      pace : '8:45'
+      name : 'Deanna',
+      pace : '8:45',
+      paceMilliseconds : 525000
     },
     {
-      name : 'L. Magnoni',
-      pace : '8:00'
+      name : 'Lori',
+      pace : '8:00',
+      paceMilliseconds : 480000
     },
     {
-      name : 'E. Galarza',
-      pace : '8:45'
+      name : 'Edwin',
+      pace : '8:45',
+      paceMilliseconds : 525000
     },
     {
-      name : 'C. Walkinshaw',
-      pace : '8:05'
+      name : 'Caroline',
+      pace : '8:05',
+      paceMilliseconds : 480000
     },
     {
-      name : 'K. Lewandroski',
-      pace : '8:47'
+      name : 'Katie',
+      pace : '8:47',
+      paceMilliseconds : 540000
     },
     {
-      name : 'M. Weed',
-      pace : '9:40'
+      name : 'Meaghan',
+      pace : '9:40',
+      paceMilliseconds : 585000
     },
     {
-      name : 'A. Ewing',
-      pace : '7:30'
+      name : 'Anthony',
+      pace : '7:30',
+      paceMilliseconds : 465000
     }
   ]    
 }
@@ -99,9 +125,11 @@ var teamInfo = {
 $(document).ready(function() {  
   getInfo();  
   // Start race button click
-  $('#btnStart').on('click', startRace);     
   $('#btnReset').on('click', resetApp);     
-  $('#btnNext').on('click', nextRunner);
+
+  $(document).on('tap click', '#btnStartRace', startRace);
+  $(document).on('tap click', '#btnNextRunner', nextRunner);
+  $(document).on('tap click', '.list-group-item-success', function(){ alert('tap'); });
   window.setInterval(updateClock, 1000);
 });
 
@@ -181,7 +209,6 @@ function getCurrentRunner() {
 function updateClock() {
   populateList();
   if (liveInfo.raceStart == null) {
-    $('#bigmessage').html('Time to Apocalypse');
     $('#bigtime').html(getTimeDifferenceString(teamInfo.raceStart, new Date()));
   }  
 }
@@ -211,43 +238,65 @@ function getTimeString(totalMilliseconds) {
   return result;
 }
 
+function getETADateTimeString(predictedDateTime) {
+  return 'Jun ' + predictedDateTime.getDate() + ' ' + predictedDateTime.getHours() + ':' + predictedDateTime.getMinutes();
+}
+
 // Fill list with data
 function populateList() {
   if (liveInfo === null) return;
   var html = "";  
-  var lastWasCompleted = false;
+  var lastWasCompleted = false;  
+  var currentRunnerTimeString = null;
+  var trackingDateTime = moment(teamInfo.raceStart);
   
   for (var legIndex = 0; legIndex < 3; legIndex++) {
     for (var runnerIndex = 0; runnerIndex < 12; runnerIndex++)  {
       var legHtml = '';
       
       var completionTime = liveInfo.legCompletionTime[runnerIndex][legIndex];
+      var legMileage = raceInfo.legDistance[runnerIndex][legIndex];
       var completedRunner = (completionTime >= 0);
       var currentRunner = (liveInfo.raceStart !== null && completionTime === -1 && (lastWasCompleted || legIndex === 0 && (runnerIndex == 0)));
-      
-      // Runner details            '
-      legHtml += '<h3 class="list-group-item-heading" style="float:left">' + teamInfo.runner[runnerIndex].name + '</h3>';
-      legHtml += '<h3 class="list-group-item-heading" style="float:right">'
-      if (completedRunner) {
-        legHtml += getTimeString(completionTime);
-      }
-      else if (currentRunner) {
-        legHtml += getTimeDifferenceString(new Date(), liveInfo.currentLegStartTime); 
-      }
-      else {
-        legHtml += 'ETA';
-      }
-      legHtml += '</h3>';
-           
+      var theRunner = teamInfo.runner[runnerIndex];
       var vanNumber = runnerIndex > 5 ? 2 : 1;
       var runnerNumber = vanNumber === 2 ? runnerIndex - 5 : runnerIndex + 1;      
-      var legNumber = legIndex + 1;
+      var legNumber = (runnerIndex + 1) + 12 * (legIndex);      
+      
+      // Runner details            
+      // Top header
+      legHtml += '<h3 class="list-group-item-heading" style="float:left">' + teamInfo.runner[runnerIndex].name + '</h3>';      
+      legHtml += '<span class="label label-primary label-margin" style="float:right">Leg ' + legNumber + '</span>';      
+      legHtml += '<span class="label label-primary label-margin" style="float:right">Van ' + vanNumber + '</span>';
       legHtml += '<div style="clear:both;"></div>'
       
-      legHtml += '<span class="label label-primary label-margin" style="float:left">Van ' + vanNumber + '</span>';
-      legHtml += '<span class="label label-primary label-margin" style="float:left">Runner ' + runnerNumber + '</span>';
-      legHtml += '<span class="label label-primary label-margin" style="float:left">Leg ' + legNumber + '</span>';
-      if (completedRunner) legHtml += '<h3 class="list-group-item-heading" style="float:right">PACE</h3>'
+      // Right
+      var data = "";
+      var extraClass = "";
+      if (completedRunner) {
+        data = getTimeString(completionTime);    
+        trackingDateTime = moment(teamInfo.raceStart).add('milliseconds', completionTime);          
+      }
+      else if (currentRunner) {
+        currentRunnerTimeString = getTimeDifferenceString(new Date(), liveInfo.currentLegStartTime); 
+        data = ''; // blank data here because it's dynamic, so we need to check it after cache check
+        extraClass = "current-runner";
+        trackingDateTime.add('milliseconds', theRunner.paceMilliseconds * legMileage);
+        legHtml += '<button type="button" id="btnNextRunner" class="btn btn-success">Leg Complete</button>'
+      }
+      else {                
+          data = trackingDateTime.format('MMM D h:mm a');                  
+          trackingDateTime.add('milliseconds', theRunner.paceMilliseconds * legMileage);
+        if (legIndex === 0 && runnerIndex === 0) {legHtml += '<button type="button" id="btnStartRace" class="btn btn-success">Start The Race!</button>';}
+      }
+      legHtml += '<h3 class="list-group-item-heading ' + extraClass + '" style="float:right">' + data + '</h3>';      
+      
+      if (completedRunner) {
+        legHtml += '<div style="clear:both;"></div>'
+        var millisecondsPerMile = completionTime / legMileage;
+        var paceString = getTimeString(millisecondsPerMile);
+        legHtml += '<h3 class="list-group-item-heading" style="float:right">Pace:' + paceString + '</h3>';
+      }
       legHtml += '<div style="clear:both;"></div>'
       
       // Set class item
@@ -255,7 +304,7 @@ function populateList() {
       // Set class item to green       
       // Set current runner class to yellow
       if (currentRunner) {        
-        listGroupItemClass += ' list-group-item-warning';
+        listGroupItemClass += ' list-group-item-warning';        
       }
       if (completedRunner) {
         listGroupItemClass += ' list-group-item-success';
@@ -264,12 +313,13 @@ function populateList() {
       else {lastWasCompleted = false;}
       
       // add list group wrapper
-      legHtml = '<div onclick="woah()" class="' + listGroupItemClass + '">' + legHtml + '</div>';
-      
-      /*<h4 class="list-group-item-heading">My heading 1</h4><p class="list-group-item-text">My text 1</p><table class="table"><tbody><tr><td>A</td><td>B</td><td>C</td></tr><tr><td>D</td><td>E</td><td>F</td></tr><tr><td>G</td><td>H</td><td>I</td></tr></tbody></table><p></p>
-      */
+      legHtml = '<div class="' + listGroupItemClass + '">' + legHtml + '</div>';
+
       html += legHtml;      
     }
   }
-  $('#infoList').html(html);
+  $('.current-runner').each(function(index) {$(this).text('')});
+  if ($('#infoList').html() != html) {$('#infoList').html(html);}
+  // Do all live data updates here
+  $('.current-runner').each(function(index) {$(this).text(currentRunnerTimeString);});
 }
